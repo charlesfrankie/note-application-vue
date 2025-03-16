@@ -10,7 +10,9 @@ import BackendLayout from '../views/layouts/BackendLayout.vue'
 import { useAuthStore } from '../stores/authentication'
 
 const routes = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(
+    import.meta.env.VITE_ENVIRONMENT === 'production' ? import.meta.env.VITE_REPO_NAME : '/',
+  ),
   routes: [
     {
       path: '/',
