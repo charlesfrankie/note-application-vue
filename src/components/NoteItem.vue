@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineProps } from 'vue'
+import { defineProps, defineEmits } from 'vue'
 import type { PropType } from 'vue'
 import type { Note } from '../types/note'
 import { useNoteStore } from '../stores/notes'
@@ -14,18 +14,19 @@ defineProps({
   },
 })
 
+const emit = defineEmits<{
+  (event: 'delete', id: number): void
+}>()
+
 const noteStore = useNoteStore()
 const toast = useToast()
 const getNote = async (note: any) => {
   if (useAuthStore().isAuthenticated()) {
-    const authId = useAuthStore().auth_id
-    if (authId && parseInt(note.userId) !== parseInt(authId)) {
-      toast.error('Permission denied! You have no access to this note.')
+    const response = await noteStore.getNoteById(note.id)
+    if (response.success) {
+      noteStore.editNote(response.note)
     } else {
-      const response = await noteStore.getNoteById(note.id)
-      if (response.success) {
-        noteStore.editNote(response.note)
-      }
+      toast.error(response.message)
     }
   } else {
     toast.error('Pleas login to perform this action.')
@@ -33,10 +34,8 @@ const getNote = async (note: any) => {
 }
 const handleDeleteNote = async (note: any) => {
   if (useAuthStore().isAuthenticated()) {
-    const authId = useAuthStore().auth_id
-    if (authId && parseInt(note.userId) !== parseInt(authId)) {
-      toast.error('Permission denied! You have no access to this note.')
-    } else {
+    const response = await noteStore.getNoteById(note.id)
+    if (response.success) {
       const primaryColor = getComputedStyle(document.documentElement)
         .getPropertyValue('--primary-color')
         .trim()
@@ -53,14 +52,10 @@ const handleDeleteNote = async (note: any) => {
       })
 
       if (result.isConfirmed) {
-        const response = await noteStore.deleteNote(note.id)
-        if (response.success) {
-          toast.success('Note has been deleted.')
-          router.push({ name: 'backend.not' })
-        } else {
-          toast.error(response.message)
-        }
+        emit('delete', note.id)
       }
+    } else {
+      toast.error(response.message)
     }
   } else {
     toast.error('Pleas login to perform this action.')
@@ -72,9 +67,12 @@ const handleDeleteNote = async (note: any) => {
   <div class="note-item bg-gray-100 rounded p-2 sm:p-4 mb-3">
     <div class="note-title flex justify-between items-center mb-1 gap-2">
       <h3 class="text-black text-base sm:text-lg font-medium line-clamp-1 sm:line-clamp-2">
-        <a href="#" class="underline hover:text-gray-600 transition-colors duration-200">
+        <RouterLink
+          :to="{ name: 'view-note', params: { id: note.id } }"
+          class="underline hover:text-gray-600 transition-colors duration-200"
+        >
           {{ note.title }}
-        </a>
+        </RouterLink>
       </h3>
       <span class="text-sm text-gray-500">
         {{

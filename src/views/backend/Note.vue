@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useNoteStore } from '../../stores/notes'
 import PulseLoader from 'vue-spinner/src/PulseLoader.vue'
 import dayjs from 'dayjs'
@@ -7,7 +7,10 @@ import { useAuthStore } from '../../stores/authentication'
 import { useToast } from 'vue-toastification'
 import { useRouter } from 'vue-router'
 import Swal from 'sweetalert2'
+import { debounce } from 'lodash'
+import { useRoute } from 'vue-router'
 
+const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const noteStore = useNoteStore()
@@ -18,9 +21,17 @@ const totalPages = ref(0)
 const pageNumber = ref(1)
 const pageSize = 10
 const orderBy = ref('')
+const filterBy = ref('')
+const search = ref('')
 
-const fetchNotes = async (orderBy: string | null = null) => {
-  const response = await noteStore.getNotes(orderBy, pageNumber.value, pageSize)
+const fetchNotes = async () => {
+  const response = await noteStore.getNotes(
+    orderBy.value,
+    filterBy.value,
+    search.value,
+    pageNumber.value,
+    pageSize,
+  )
   if (response && response.success) {
     notes.value = response.data.notes
     totalCount.value = response.data.totalCount
@@ -62,6 +73,7 @@ const deleteNote = async (note) => {
       const response = await noteStore.deleteNote(note.id)
       if (response.success) {
         toast.success('Note has been deleted.')
+        fetchNotes()
       } else {
         toast.error(response.message)
       }
@@ -71,11 +83,11 @@ const deleteNote = async (note) => {
 
 const prevPage = () => {
   pageNumber.value--
-  fetchNotes(orderBy.value)
+  fetchNotes()
 }
 const nextPage = () => {
   pageNumber.value++
-  fetchNotes(orderBy.value)
+  fetchNotes()
 }
 
 const handleFilter = (type: string) => {
@@ -86,25 +98,67 @@ const handleFilter = (type: string) => {
     if (selectElement.value === 'Sort by') {
       orderBy.value = 'created_at-desc'
     }
-    fetchNotes(orderBy.value)
+  } else if (type === 'filter') {
+    const selectElement = document.getElementById('filterBy') as HTMLSelectElement
+    filterBy.value = selectElement.value
+
+    if (selectElement.value !== 'my_post') {
+      filterBy.value = ''
+    }
   }
+  fetchNotes()
 }
+
+const debounceFetchNotes = debounce(fetchNotes, 300)
+// Watch for changes in the search input and debounce API calls
+watch(search, () => {
+  debounceFetchNotes()
+})
 
 onMounted(fetchNotes)
 </script>
 
 <template>
-  <div class="relative overflow-x-auto mt-5 px-8 py-4">
+  <div class="relative overflow-x-auto w-full mt-0 p-3">
     <div v-if="isLoading" class="text-center py-6">
       <PulseLoader />
     </div>
     <div v-else>
-      <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-2">
+      <div class="flex flex-col items-end lg:flex-row sm:items-center justify-between mb-4 gap-2">
+        <div class="md:w-auto self-start flex gap-2 items-center">
+          <p class="text-black text-lg">Note List</p>
+          <RouterLink
+            v-if="route.path.startsWith('/admin/notes')"
+            :to="{ name: 'backend.add_note' }"
+            class="bg-green-500 rounded p-2 border-green-500 text-white text-sm transition-color duration-200 hover:bg-green-700"
+          >
+            Add Note
+          </RouterLink>
+        </div>
+        <div
+          class="flex flex-col w-full sm:w-auto items-end sm:flex-row sm:items-center justify-end gap-2"
+        >
+          <input
+            type="text"
+            id="search"
+            name="search"
+            v-model="search"
+            placeholder="Search..."
+            class="w-full sm:w-64 p-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-gray-400 focus:border-gray-400 text-sm"
+          />
+          <select
+            @change="handleFilter('filter')"
+            id="filterBy"
+            class="w-full sm:w-40 bg-white border border-gray-300 text-gray-900 text-sm rounded focus:ring-blue-500 focus:border-blue-500 block p-2"
+          >
+            <option selected>Filter</option>
+            <option value="all">All</option>
+            <option value="my_post">My post</option>
+          </select>
           <select
             @change="handleFilter('sort')"
             id="sortBy"
-            class="bg-white border border-gray-300 text-gray-900 text-sm rounded w-40 focus:ring-blue-500 focus:border-blue-500 block p-2"
+            class="w-full sm:w-40 bg-white border border-gray-300 text-gray-900 text-sm rounded w-40 focus:ring-blue-500 focus:border-blue-500 block p-2"
           >
             <option selected>Sort by</option>
             <option value="created_at-asc">Date: Ascending</option>
@@ -114,14 +168,14 @@ onMounted(fetchNotes)
           </select>
         </div>
       </div>
-      <table class="w-full text-sm text-left rtl:text-right text-gray-500 border">
+      <table class="table-auto w-full text-sm text-left text-gray-500 border">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50">
           <tr>
-            <th scope="col" class="px-6 py-3 w-12 min-w-[40px] text-center">No</th>
-            <th scope="col" class="px-6 py-3 w-1/6">Title</th>
-            <th scope="col" class="px-6 py-3 w-2/6">Content</th>
-            <th scope="col" class="px-6 py-3 w-1/6">Date</th>
-            <th scope="col" class="px-6 py-3 w-1/6">Action</th>
+            <th scope="col" class="p-2 sm:px-6 sm:py-3 w-12 min-w-[40px] text-center">No</th>
+            <th scope="col" class="p-2 sm:px-6 sm:py-3 w-1/6">Title</th>
+            <th scope="col" class="p-2 sm:px-6 sm:py-3 w-2/6">Content</th>
+            <th scope="col" class="p-2 sm:px-6 sm:py-3 w-1/6">Date</th>
+            <th scope="col" class="p-2 sm:px-6 sm:py-3 w-1/6">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -130,19 +184,19 @@ onMounted(fetchNotes)
             :key="note.id"
             class="bg-white border-b border-gray-200"
           >
-            <th scope="row" class="px-6 py-4 w-12 min-w-[40px] text-center">
+            <th scope="row" class="md:p-3 w-12 min-w-[40px] text-center">
               {{ (pageNumber - 1) * pageSize + index + 1 }}
             </th>
-            <td class="px-6 py-4 w-1/6">
+            <td class="p-2 md:p-3 w-1/6">
               {{
                 note.title
-                  ? note.content.title > 20
+                  ? note.title.length > 20
                     ? note.title.slice(0, 20) + '...'
                     : note.title
                   : ''
               }}
             </td>
-            <td class="px-6 py-4 w-1/6">
+            <td class="p-2 md:p-3 w-1/6">
               {{
                 note.content
                   ? note.content.length > 120
@@ -151,7 +205,7 @@ onMounted(fetchNotes)
                   : ''
               }}
             </td>
-            <td class="px-6 py-4">
+            <td class="p-2 md:p-3">
               {{
                 note.updated_at
                   ? dayjs(note.updated_at).format('YYYY-MM-DD HH:mm:ss')
@@ -160,10 +214,10 @@ onMounted(fetchNotes)
                     : ''
               }}
             </td>
-            <td class="px-6 py-4 gap-2 flex">
+            <td class="p-2 md:p-3 gap-2 flex flex-col items-center sm:flex-row">
               <a
                 @click="editNote(note)"
-                class="bg-green-600 cursor-pointer text-white px-2 py-1 rounded text-sm hover:bg-green-700 transition-background duration-200"
+                class="w-fit bg-green-600 cursor-pointer text-white px-2 py-1 rounded text-sm hover:bg-green-700 transition-background duration-200"
               >
                 <img
                   src="../../assets/edit.svg"
@@ -173,7 +227,7 @@ onMounted(fetchNotes)
               </a>
               <a
                 @click="deleteNote(note)"
-                class="bg-red-600 cursor-pointer text-white px-2 py-1 rounded text-sm hover:bg-red-700 transition-background duration-200"
+                class="w-fit bg-red-600 cursor-pointer text-white px-2 py-1 rounded text-sm hover:bg-red-700 transition-background duration-200"
               >
                 <img
                   src="../../assets/delete.svg"

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import apiClient from '../axiosIntance'
+import { setApiClientHeaders } from '../axiosIntance'
 import type { User } from '../types/user'
 
 export const useAuthStore = defineStore('auth', {
@@ -15,13 +16,14 @@ export const useAuthStore = defineStore('auth', {
           email,
           password,
         })
-
-        this.token = response.data.token
-        this.auth_id = response.data.id
-        this.auth_name = response.data.name
+        const user = response.data.user
+        this.token = user.token
+        this.auth_id = user.data.id
+        this.auth_name = user.data.name
 
         if (this.token) {
           sessionStorage.setItem('token', this.token)
+          setApiClientHeaders({ Authorization: `Bearer ${this.token}` })
         }
         if (this.auth_id) {
           sessionStorage.setItem('auth_id', this.auth_id)

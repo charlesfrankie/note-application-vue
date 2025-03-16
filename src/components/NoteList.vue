@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import NoteItem from './NoteItem.vue'
-import { ref, onMounted, defineProps } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import PulseLoader from 'vue-spinner/src/PulseLoader.vue'
 import { useNoteStore } from '../stores/notes'
+import { debounce } from 'lodash'
+import { useToast } from 'vue-toastification'
 
 const noteStore = useNoteStore()
+const toast = useToast()
 const isLoading = ref(true)
 const notes = ref([])
 const totalCount = ref(0)
@@ -12,10 +15,18 @@ const totalPages = ref(0)
 const pageNumber = ref(1)
 const pageSize = 10
 const orderBy = ref('')
+const filterBy = ref('')
+const search = ref('')
 
-const fetchNotes = async (type: string | null = null) => {
+const fetchNotes = async () => {
   try {
-    const response = await noteStore.getNotes(type, pageNumber.value, pageSize)
+    const response = await noteStore.getNotes(
+      orderBy.value,
+      filterBy.value,
+      search.value,
+      pageNumber.value,
+      pageSize,
+    )
     if (response.success) {
       notes.value = response.data.notes
       totalCount.value = response.data.totalCount
@@ -29,6 +40,16 @@ const fetchNotes = async (type: string | null = null) => {
   }
 }
 
+const deleteNote = async (id: Number) => {
+  const response = await noteStore.deleteNote(id)
+  if (response.success) {
+    toast.success('Note has been deleted.')
+    fetchNotes()
+  } else {
+    toast.error(response.message)
+  }
+}
+
 const handleFilter = (type: string) => {
   if (type === 'sort') {
     const selectElement = document.getElementById('sortBy') as HTMLSelectElement
@@ -37,17 +58,30 @@ const handleFilter = (type: string) => {
     if (selectElement.value === 'Sort by') {
       orderBy.value = 'created_at-desc'
     }
-    fetchNotes(orderBy.value)
+  } else if (type === 'filter') {
+    const selectElement = document.getElementById('filterBy') as HTMLSelectElement
+    filterBy.value = selectElement.value
+
+    if (selectElement.value !== 'my_post') {
+      filterBy.value = ''
+    }
   }
+  fetchNotes()
 }
+
+const debounceFetchNotes = debounce(fetchNotes, 300)
+// Watch for changes in the search input and debounce API calls
+watch(search, () => {
+  debounceFetchNotes()
+})
 
 const prevPage = () => {
   pageNumber.value--
-  fetchNotes(orderBy.value)
+  fetchNotes()
 }
 const nextPage = () => {
   pageNumber.value++
-  fetchNotes(orderBy.value)
+  fetchNotes()
 }
 
 onMounted(fetchNotes)
@@ -55,9 +89,28 @@ onMounted(fetchNotes)
 
 <template>
   <div class="note-list p-4">
-    <div class="flex gap-2 items-center justify-between">
-      <h2 class="text-xl xl:text-2xl font-semibold">Notes</h2>
-      <div class="">
+    <div class="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <h2 class="text-xl xl:text-2xl font-semibold">Notes</h2>
+        <input
+          type="text"
+          id="search"
+          name="search"
+          v-model="search"
+          placeholder="Search..."
+          class="w-full p-2 border rounded shadow-sm focus:outline-none focus:ring-gray-400 focus:border-gray-400 text-sm"
+        />
+      </div>
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <select
+          @change="handleFilter('filter')"
+          id="filterBy"
+          class="bg-white border border-gray-300 text-gray-900 text-sm rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-2"
+        >
+          <option selected>Filter</option>
+          <option value="all">All</option>
+          <option value="my_post">My post</option>
+        </select>
         <select
           @change="handleFilter('sort')"
           id="sortBy"
@@ -76,7 +129,7 @@ onMounted(fetchNotes)
       <PulseLoader />
     </div>
     <div v-else class="note-list">
-      <NoteItem v-for="note in notes" :key="note.id" :note="note" />
+      <NoteItem v-for="note in notes" :key="note.id" :note="note" @delete="deleteNote" />
     </div>
     <div class="flex items-center justify-center gap-2 my-5">
       <button

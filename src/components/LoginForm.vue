@@ -4,6 +4,7 @@ import { ref } from 'vue'
 import { useAuthStore } from '../stores/authentication'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
+import PulseLoader from 'vue-spinner/src/PulseLoader.vue'
 
 const router = useRouter()
 const toast = useToast()
@@ -19,7 +20,6 @@ const handleLogin = async () => {
   } else {
     isLoading.value = true
     const response = await authStore.login(email.value, password.value)
-
     if (response.success) {
       toast.success(response.message)
       isLoading.value = false
@@ -75,7 +75,8 @@ const handleLogin = async () => {
             class="w-full text-white transition-color duration-200 bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
             :class="{ 'cursor-not-allowed': isLoading }"
           >
-            Log in
+            <PulseLoader v-if="isLoading" />
+            <p v-else>Log in</p>
           </button>
           <p class="text-sm font-light text-gray-500">
             Don’t have an account yet?

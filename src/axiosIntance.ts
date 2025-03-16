@@ -1,10 +1,17 @@
 import axios from 'axios'
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:5099/api',
+  baseURL: import.meta.env.VITE_API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 })
+
+export const setApiClientHeaders = (newHeaders: any) => {
+  apiClient.defaults.headers.common = {
+    ...apiClient.defaults.headers.common,
+    ...newHeaders,
+  }
+}
 
 export default apiClient

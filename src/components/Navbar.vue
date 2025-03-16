@@ -48,12 +48,12 @@ const handleLogout = async () => {
 <template>
   <nav class="bg-white border-gray-200 dark:bg-gray-900 relative">
     <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-      <RouterLink
-        to="/"
+      <a
+        href="/"
         class="text-green-500 text-2xl rounded-sm font-bold dark:hover:text-green-700 transition-colors duration-200"
       >
         <h1>{{ title }}</h1>
-      </RouterLink>
+      </a>
       <button
         id="hamburger-btn"
         @click="handleBurgerBtn"

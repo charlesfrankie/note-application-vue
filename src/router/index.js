@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import AddNote from '../views/AddNote.vue'
+import ViewNote from '../views/ViewNote.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import Note from '../views/backend/Note.vue'
@@ -20,6 +21,18 @@ const routes = createRouter({
       path: '/notes/add',
       name: 'add-note',
       component: AddNote,
+      beforeEnter: (to, from, next) => {
+        if (useAuthStore().isAuthenticated()) {
+          next()
+        } else {
+          next({ name: 'login' })
+        }
+      },
+    },
+    {
+      path: '/notes/view/:id',
+      name: 'view-note',
+      component: ViewNote,
       beforeEnter: (to, from, next) => {
         if (useAuthStore().isAuthenticated()) {
           next()

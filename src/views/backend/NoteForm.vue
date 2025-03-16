@@ -69,7 +69,7 @@ function resetForm() {
 onMounted(fetchNote)
 </script>
 <template>
-  <div class="relative overflow-x-auto mt-5">
+  <div class="relative overflow-x-auto mt-5 w-full">
     <div v-if="isLoading" class="text-center py-6">
       <PulseLoader />
     </div>
@@ -104,7 +104,6 @@ onMounted(fetchNote)
         Save change
       </button>
       <button
-        v-if="isEdit"
         @click="handleCancel"
         type="button"
         class="text-white ml-4 bg-yellow-500 transition-color duration-200 hover:bg-yellow-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm w-full sm:w-auto px-5 py-2.5 text-center"
