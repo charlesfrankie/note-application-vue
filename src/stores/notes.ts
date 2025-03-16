@@ -59,7 +59,7 @@ export const useNoteStore = defineStore('note', {
             },
           },
         )
-        this.notes.unshift(note)
+        this.notes.unshift(response.data.data)
         return { success: true, message: response.data.message }
       } catch (error: any) {
         return { success: false, message: error.response.data }
