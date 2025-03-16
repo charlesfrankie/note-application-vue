@@ -6,7 +6,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/note-application-vue/',
+  base: process.env.VITE_ENVIRONMENT == 'production' ? process.env.VITE_REPO_NAME : '',
   plugins: [vue(), vueDevTools()],
   server: {
     port: 3000,
