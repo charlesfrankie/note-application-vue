@@ -17,12 +17,12 @@ const toggleSidebar = () => {
 
 <template>
   <nav class="bg-white border-2 border-bottom-200 relative flex justify-between px-3 md:px-5 py-3">
-    <a
-      href="/admin/notes"
+    <RouterLink
+      :to="{ name: 'backend.note' }"
       class="hidden md:flex items-center p-2 dark:text-green-500 rounded-lg group text-xl"
     >
       <span>Note Application</span>
-    </a>
+    </RouterLink>
     <button
       type="button"
       @click="toggleSidebar"

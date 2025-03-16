@@ -56,12 +56,12 @@ const toggleSidebar = () => {
     <div class="h-full px-0 overflow-y-auto dark:bg-gray-900 flex justify-between">
       <ul class="space-y-2 font-medium w-full px-3 py-6">
         <li>
-          <a
-            href="/admin/notes"
+          <RouterLink
+            :to="{ name: 'backend.note' }"
             class="md:hidden flex items-center px-2 dark:text-green-500 rounded-lg group text-xl"
           >
             <span>Note Application</span>
-          </a>
+          </RouterLink>
         </li>
         <li>
           <RouterLink

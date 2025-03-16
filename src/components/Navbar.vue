@@ -48,12 +48,12 @@ const handleLogout = async () => {
 <template>
   <nav class="bg-white border-gray-200 dark:bg-gray-900 relative">
     <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-      <a
-        href="/"
+      <RouteLink
+        :to="{ name: 'home' }"
         class="text-green-500 text-2xl rounded-sm font-bold dark:hover:text-green-700 transition-colors duration-200"
       >
         <h1>{{ title }}</h1>
-      </a>
+      </RouteLink>
       <button
         id="hamburger-btn"
         @click="handleBurgerBtn"
@@ -138,10 +138,10 @@ const handleLogout = async () => {
                 aria-labelledby="dropdownLargeButton"
               >
                 <li>
-                  <a
-                    href="/admin/notes"
+                  <RouterLink
+                    :to="{ name: 'backend.note' }"
                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white rounded-lg"
-                    >Admin panel</a
+                    >Admin panel</RouterLink
                   >
                 </li>
               </ul>
