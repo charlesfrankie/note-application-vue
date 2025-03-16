@@ -4,4 +4,5 @@ export type Note = {
   content: string | null
   created_at: string | null
   updated_at: string | null
+  userId: number | null
 }

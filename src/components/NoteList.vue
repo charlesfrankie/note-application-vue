@@ -3,13 +3,14 @@ import NoteItem from './NoteItem.vue'
 import { ref, onMounted, watch } from 'vue'
 import PulseLoader from 'vue-spinner/src/PulseLoader.vue'
 import { useNoteStore } from '../stores/notes'
-import { debounce } from 'lodash'
+import debounce from 'lodash'
 import { useToast } from 'vue-toastification'
+import type { Note } from '../types/note'
 
 const noteStore = useNoteStore()
 const toast = useToast()
 const isLoading = ref(true)
-const notes = ref([])
+const notes = ref<Note[]>([])
 const totalCount = ref(0)
 const totalPages = ref(0)
 const pageNumber = ref(1)
@@ -27,7 +28,7 @@ const fetchNotes = async () => {
       pageNumber.value,
       pageSize,
     )
-    if (response.success) {
+    if (response && response.success) {
       notes.value = response.data.notes
       totalCount.value = response.data.totalCount
       totalPages.value = response.data.totalPage
@@ -129,7 +130,12 @@ onMounted(fetchNotes)
       <PulseLoader />
     </div>
     <div v-else class="note-list">
-      <NoteItem v-for="note in notes" :key="note.id" :note="note" @delete="deleteNote" />
+      <NoteItem
+        v-for="note in notes"
+        :key="note.id ?? note.title"
+        :note="note"
+        @delete="deleteNote"
+      />
     </div>
     <div class="flex items-center justify-center gap-2 my-5">
       <button

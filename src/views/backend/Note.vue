@@ -7,15 +7,16 @@ import { useAuthStore } from '../../stores/authentication'
 import { useToast } from 'vue-toastification'
 import { useRouter } from 'vue-router'
 import Swal from 'sweetalert2'
-import { debounce } from 'lodash'
+import debounce from 'lodash'
 import { useRoute } from 'vue-router'
+import type { Note } from '../../types/note'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const noteStore = useNoteStore()
 const isLoading = ref(true)
-const notes = ref([])
+const notes = ref<Note[]>([])
 const totalCount = ref(0)
 const totalPages = ref(0)
 const pageNumber = ref(1)
@@ -40,18 +41,18 @@ const fetchNotes = async () => {
   }
 }
 
-const editNote = async (note) => {
+const editNote = async (note: Note) => {
   const authId = useAuthStore().auth_id
-  if (authId && parseInt(note.userId) !== parseInt(authId)) {
+  if (authId && note.userId !== parseInt(authId)) {
     toast.error('Permission denied! You have no access to this note.')
   } else {
     router.push(`/admin/notes/edit/${note.id}`)
   }
 }
 
-const deleteNote = async (note) => {
+const deleteNote = async (note: Note) => {
   const authId = useAuthStore().auth_id
-  if (authId && parseInt(note.userId) !== parseInt(authId)) {
+  if (authId && note.userId !== parseInt(authId)) {
     toast.error('Permission denied! You have no access to this note.')
   } else {
     const primaryColor = getComputedStyle(document.documentElement)
@@ -70,7 +71,7 @@ const deleteNote = async (note) => {
     })
 
     if (result.isConfirmed) {
-      const response = await noteStore.deleteNote(note.id)
+      const response = await noteStore.deleteNote(note.id ?? 0)
       if (response.success) {
         toast.success('Note has been deleted.')
         fetchNotes()
@@ -181,7 +182,7 @@ onMounted(fetchNotes)
         <tbody>
           <tr
             v-for="(note, index) in notes"
-            :key="note.id"
+            :key="note.id ?? note.title"
             class="bg-white border-b border-gray-200"
           >
             <th scope="row" class="md:p-3 w-12 min-w-[40px] text-center">

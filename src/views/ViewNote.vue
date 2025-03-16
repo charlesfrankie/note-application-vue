@@ -3,12 +3,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { ref, onMounted } from 'vue'
 import { useNoteStore } from '../stores/notes'
 import { useAuthStore } from '../stores/authentication'
+import type { Note } from '../types/note'
 
 const router = useRouter()
 const route = useRoute()
 const id = ref(Number(route.params.id) ?? null)
 const noteStore = useNoteStore()
-const note = ref({})
+const note = ref<Note>()
 
 const fetchNote = async () => {
   if (useAuthStore().isAuthenticated()) {
@@ -29,19 +30,25 @@ onMounted(fetchNote)
 <template>
   <div class="p-4 my-3">
     <div>
-      <h1 class="text-xl sm:text-2xl font-semibold mb-3">{{ note.title }}</h1>
+      <h1 class="text-xl sm:text-2xl font-semibold mb-3">{{ note ? note.title : '' }}</h1>
       <p class="text-gray-500 text-sm mb-1">
         Create at:
-        {{ note.created_at ? new Date(note.created_at).toLocaleString().replace('T', '') : '' }}
+        {{
+          note
+            ? note.created_at
+              ? new Date(note.created_at).toLocaleString().replace('T', '')
+              : ''
+            : ''
+        }}
       </p>
-      <p v-if="note.updated_at" class="text-gray-500 text-sm">
+      <p v-if="note && note.updated_at" class="text-gray-500 text-sm">
         Update at:
         {{ note.updated_at ? new Date(note.updated_at).toLocaleString().replace('T', '') : '' }}
       </p>
     </div>
     <hr class="my-4" />
     <p>
-      {{ note.content }}
+      {{ note ? note.content : '' }}
     </p>
   </div>
 </template>

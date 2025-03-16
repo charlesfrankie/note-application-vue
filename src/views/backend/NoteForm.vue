@@ -10,11 +10,11 @@ const route = useRoute()
 const router = useRouter()
 const noteStore = useNoteStore()
 const id = Number(route.params.id)
-const title = ref<string>()
-const content = ref<string>()
+const title = ref<string>('')
+const content = ref<string>('')
 const isEdit = ref<Boolean>(false)
 const isLoading = ref(false)
-const note = ref<Note>({})
+const note = ref<Note>()
 
 const fetchNote = async () => {
   if (id) {
@@ -46,6 +46,7 @@ const submitForm = async () => {
       content: content.value,
       created_at: null,
       updated_at: new Date().toISOString(),
+      userId: note.value ? note.value.userId : null,
     }
 
     const response = isEdit.value
@@ -60,7 +61,7 @@ const submitForm = async () => {
 }
 
 function resetForm() {
-  note.value = null
+  note.value = undefined
   title.value = ''
   content.value = ''
   isEdit.value = false

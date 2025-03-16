@@ -45,6 +45,7 @@ const handleSubmit = async () => {
       content: content.value,
       created_at: null,
       updated_at: new Date().toISOString(),
+      userId: noteStore.selectedNote ? noteStore.selectedNote.userId : null,
     }
 
     const response = is_edit.value
